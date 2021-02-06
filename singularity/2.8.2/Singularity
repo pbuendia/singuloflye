@@ -1,0 +1,53 @@
+Bootstrap: docker
+From: ubuntu:xenial
+Stage: spython-base
+
+%labels
+base.image="ubuntu:xenial"
+dockerfile.version="1"
+software="Flye"
+software.version="2.8.2"
+description="Fast and accurate de novo assembler for single molecule sequencing reads"
+website="https://github.com/fenderglass/Flye"
+license="https://github.com/fenderglass/Flye/blob/flye/LICENSE"
+maintainer1="Abigail Shockey"
+maintainer1.email="Abigail.Shockey@slh.wisc.edu"
+maintainer2="Curtis Kapsak"
+maintainer2.email="pjx8@cdc.gov"
+%post
+
+# ARG variables only persist during build time. Adding for easy upgrade later
+FLYE_VER="2.8.2"
+
+
+apt-get update && apt-get install -y make \
+gcc \
+g++ \
+python \
+python-pip \
+python-setuptools \
+zlib1g-dev \
+wget && \
+rm -rf /var/lib/apt/lists/* && apt-get clean && apt-get autoclean
+
+# install flye and make /data
+wget https://github.com/fenderglass/Flye/archive/${FLYE_VER}.tar.gz && \
+tar -xvf ${FLYE_VER}.tar.gz && \
+rm ${FLYE_VER}.tar.gz && \
+cd Flye-${FLYE_VER} && \
+python setup.py build && \
+python setup.py install && \
+mkdir /data
+
+cd /data
+
+# just in case for singularity compatibility
+LC_ALL=C
+%environment
+export LC_ALL=C
+%runscript
+cd /data
+exec /bin/bash "$@"
+%startscript
+cd /data
+exec /bin/bash "$@"
